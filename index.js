@@ -57,6 +57,19 @@ async function run() {
       const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
     })
+    // make Musician user
+    app.patch('/allUsers/musician/:id', async (req, res) => {
+      const id = req.params;
+      const filter = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: {
+          role: 'musician'
+        },
+      };
+
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
     // connecting api's
     app.get('/', (req, res) => {
       res.send('Hello World!')
