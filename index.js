@@ -45,7 +45,16 @@ async function run() {
     await client.connect();
     // Send a ping to confirm a successful connection
     // Collection'ss
-    const userCollection = client.db("the-music-mystery").collection("users")
+    const userCollection = client.db("the-music-mystery").collection("users");
+    // create JWT token
+    app.post('/jwt', (req, res) => {
+      const user = req.body;
+      console.log('user', user);
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '5h' })
+      console.log(token);
+      res.send({ token })
+    })
+
     // get all existing user's from database
     app.get('/allUsers', async (req, res) => {
       const result = await userCollection.find().toArray();
