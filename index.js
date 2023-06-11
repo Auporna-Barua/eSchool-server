@@ -26,31 +26,44 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     // Send a ping to confirm a successful connection
-// Collection'ss
+    // Collection'ss
     const userCollection = client.db("the-music-mystery").collection("users")
-       // get all existing user's from database
-       app.get('/allUsers', async (req, res) => {
-        const result = await userCollection.find().toArray();
-        res.send(result)
+    // get all existing user's from database
+    app.get('/allUsers', async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result)
     })
-     // post newUser in database
-     app.post('/users', async (req, res) => {
-        const user = req.body;
-        const query = { email: user.email }
-        const existingUser = await userCollection.findOne(query);
-        if (existingUser) {
-            return res.send({ message: 'user already exists' })
-        }
-        const result = await userCollection.insertOne(user);
-        res.send(result)
+    // post newUser in database
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email }
+      const existingUser = await userCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: 'user already exists' })
+      }
+      const result = await userCollection.insertOne(user);
+      res.send(result)
     })
-       // connecting api's
-       app.get('/', (req, res) => {
-        res.send('Hello World!')
+    // make admin user
+    app.patch('/allUsers/admin/:id', async (req, res) => {
+      const id = req.params;
+      const filter = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: {
+          role: 'admin'
+        },
+      };
+
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
+    // connecting api's
+    app.get('/', (req, res) => {
+      res.send('Hello World!')
     })
 
     app.listen(port, () => {
-        console.log(`Example app listening on port ${port}`)
+      console.log(`Example app listening on port ${port}`)
     })
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
