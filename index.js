@@ -28,6 +28,11 @@ async function run() {
     // Send a ping to confirm a successful connection
 // Collection'ss
     const userCollection = client.db("the-music-mystery").collection("users")
+       // get all existing user's from database
+       app.get('/allUsers', async (req, res) => {
+        const result = await userCollection.find().toArray();
+        res.send(result)
+    })
      // post newUser in database
      app.post('/users', async (req, res) => {
         const user = req.body;
