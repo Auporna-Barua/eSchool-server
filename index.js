@@ -12,6 +12,24 @@ app.use(cors());
 app.use(express.json());
 
 
+// jwt middleware
+const verifyJWT = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res.status(401).send({ error: true, message: 'unauthorized access' });
+  }
+
+  // bearer token
+  const token = authorization.split(' ')[1];
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decode) => {
+    if (error) {
+      return res.status(403).send({ error: true, message: 'unauthorized access' })
+    }
+    req.decode = decode;
+    next();
+  })
+}
 
 const uri = `mongodb+srv://${process.env.DB_ID}:${process.env.DB_PASS}@cluster0.ovwjs.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
