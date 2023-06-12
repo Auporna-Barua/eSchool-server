@@ -46,6 +46,7 @@ async function run() {
     // Send a ping to confirm a successful connection
     // Collection'ss
     const userCollection = client.db("eSchool").collection("users");
+    const classCollection = client.db("eSchool").collection("classes");
     // create JWT token
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -110,6 +111,23 @@ async function run() {
       const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
     })
+    // course related api
+
+    app.post('/addClass', verifyJWT, async (req, res) => {
+      const classData = req.body;
+      const result = await classCollection.insertOne(classData);
+      res.send(result)
+    })
+
+
+
+
+
+
+
+
+
+
     // connecting api's
     app.get('/', (req, res) => {
       res.send('Hello World!')
