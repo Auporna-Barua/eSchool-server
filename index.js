@@ -119,6 +119,16 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/myClasses/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const user = await userCollection.findOne({ email });
+      if (!user) {
+        res.json({ message: "user is not exits" })
+      }
+      const classes = await classCollection.find((email));
+      res.json({ classes })
+    })
+
 
 
 
