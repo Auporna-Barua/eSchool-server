@@ -45,7 +45,7 @@ async function run() {
     await client.connect();
     // Send a ping to confirm a successful connection
     // Collection'ss
-    const userCollection = client.db("the-music-mystery").collection("users");
+    const userCollection = client.db("eSchool").collection("users");
     // create JWT token
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -56,7 +56,7 @@ async function run() {
     })
 
     // get all existing user's from database
-    app.get('/allUsers', async (req, res) => {
+    app.get('/allUsers', verifyJWT, async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result)
     })
@@ -71,8 +71,14 @@ async function run() {
       const result = await userCollection.insertOne(user);
       res.send(result)
     })
+    app.delete("/user/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const quary = { _id: new ObjectId(id) };
+      const usersData = await userCollection.deleteOne(quary);
+      res.send(usersData);
+    });
     // make admin user
-    app.patch('/allUsers/admin/:id', async (req, res) => {
+    app.patch('/allUsers/admin/:id', verifyJWT, async (req, res) => {
       const id = req.params;
       const filter = { _id: new ObjectId(id) }
       const updateDoc = {
@@ -84,8 +90,15 @@ async function run() {
       const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
     })
+    app.get('/allUsers/admin/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email }
+      const user = await userCollection.findOne(query);
+      res.send(user)
+
+    })
     // make Musician user
-    app.patch('/allUsers/musician/:id', async (req, res) => {
+    app.patch('/allUsers/musician/:id', verifyJWT, async (req, res) => {
       const id = req.params;
       const filter = { _id: new ObjectId(id) }
       const updateDoc = {
@@ -109,7 +122,7 @@ async function run() {
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
