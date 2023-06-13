@@ -130,12 +130,22 @@ async function run() {
       res.json(classes)
     })
     app.get('/allClasses', verifyJWT, async (req, res) => {
-
       const classes = await classCollection.find({}).toArray();
-
       res.json(classes)
     })
+    //class approved
+    app.patch('/manageClass/approved/:id', verifyJWT, async (req, res) => {
+      const id = req.params;
+      const filter = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: {
+          status: 'approved'
+        },
+      };
 
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
 
 
 
