@@ -211,6 +211,12 @@ async function run() {
       const result = await selectedCollection.insertOne(data);
       res.send(result)
     })
+    app.delete("/selected/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const quary = { _id: new ObjectId(id) };
+      const selectedData = await selectedCollection.deleteOne(quary);
+      res.send(selectedData);
+    });
 
 
     // connecting api's
