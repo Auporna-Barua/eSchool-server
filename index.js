@@ -129,6 +129,12 @@ async function run() {
       console.log(classes);
       res.json(classes)
     })
+    app.get('/allClasses', verifyJWT, async (req, res) => {
+
+      const classes = await classCollection.find({}).toArray();
+
+      res.json(classes)
+    })
 
 
 
