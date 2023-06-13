@@ -145,6 +145,19 @@ async function run() {
 
       const result = await classCollection.updateOne(filter, updateDoc);
       res.send(result);
+    }) 
+    //class deny
+    app.patch('/manageClass/deny/:id', verifyJWT, async (req, res) => {
+      const id = req.params;
+      const filter = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: {
+          status: 'denied'
+        },
+      };
+
+      const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
     })
 
 
