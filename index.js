@@ -199,15 +199,18 @@ async function run() {
 
     app.get('/selectedClasses/:email', verifyJWT, async (req, res) => {
       const email = req.params.email;
-      const user = await selectedCollection.findOne({ email });
-      if (!user) {
-        res.json({ message: "you have no selected class" });
-      }
-      const classes = await selectedCollection.find({ email }).toArray();
+      const classes = await selectedCollection.find({ user: email }).toArray();
       res.json(classes)
     })
 
-
+    // post selected item in database
+    app.post('/selectedClass/:email', async (req, res) => {
+      const classes = req.body;
+      const email = req.params.email;
+      const data = { ...classes, user: email }
+      const result = await selectedCollection.insertOne(data);
+      res.send(result)
+    })
 
 
     // connecting api's
