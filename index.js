@@ -176,12 +176,32 @@ async function run() {
     })
 
 
-    app.get('/editClass/:id',  async (req, res) => {
+    app.get('/editClass/:id', async (req, res) => {
       const id = req.params.id;
       const result = await classCollection.findOne({ _id: new ObjectId(id) });
       res.send(result)
 
     })
+
+    app.put('/editClass/:id', verifyJWT, async (req, res) => {
+      const id = req.params;
+      const data = req.body;
+      const filter = { _id: new ObjectId(id) }
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: data,
+      };
+
+      const result = await classCollection.updateOne(filter, updateDoc, options);
+      res.send(result);
+    })
+
+
+
+
+
+
+
 
 
     // connecting api's
