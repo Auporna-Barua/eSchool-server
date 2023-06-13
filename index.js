@@ -167,7 +167,7 @@ async function run() {
       const options = { upsert: true };
       const updateDoc = {
         $set: {
-          feedBack: feedback
+          feedBack: feedback.message
         },
       };
 
@@ -176,11 +176,12 @@ async function run() {
     })
 
 
+    app.get('/editClass/:id',  async (req, res) => {
+      const id = req.params.id;
+      const result = await classCollection.findOne({ _id: new ObjectId(id) });
+      res.send(result)
 
-
-
-
-
+    })
 
 
     // connecting api's
