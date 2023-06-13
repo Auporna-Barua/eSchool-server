@@ -47,12 +47,11 @@ async function run() {
     // Collection'ss
     const userCollection = client.db("eSchool").collection("users");
     const classCollection = client.db("eSchool").collection("classes");
+    const selectedCollection = client.db("eSchool").collection("selectedClass");
     // create JWT token
     app.post('/jwt', (req, res) => {
       const user = req.body;
-      console.log('user', user);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '5h' })
-      console.log(token);
       res.send({ token })
     })
 
@@ -126,7 +125,6 @@ async function run() {
         res.json({ message: "user is not exits" });
       }
       const classes = await classCollection.find({ email }).toArray();
-      console.log(classes);
       res.json(classes)
     })
     app.get('/allClasses', verifyJWT, async (req, res) => {
@@ -197,9 +195,17 @@ async function run() {
     })
 
 
+    // selected class area start
 
-
-
+    app.get('/selectedClasses/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const user = await selectedCollection.findOne({ email });
+      if (!user) {
+        res.json({ message: "you have no selected class" });
+      }
+      const classes = await selectedCollection.find({ email }).toArray();
+      res.json(classes)
+    })
 
 
 
