@@ -123,10 +123,11 @@ async function run() {
       const email = req.params.email;
       const user = await userCollection.findOne({ email });
       if (!user) {
-        res.json({ message: "user is not exits" })
+        res.json({ message: "user is not exits" });
       }
-      const classes = await classCollection.find((email));
-      res.json({ classes })
+      const classes = await classCollection.find({ email }).toArray();
+      console.log(classes);
+      res.json(classes)
     })
 
 
