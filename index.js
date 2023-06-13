@@ -145,7 +145,7 @@ async function run() {
 
       const result = await classCollection.updateOne(filter, updateDoc);
       res.send(result);
-    }) 
+    })
     //class deny
     app.patch('/manageClass/deny/:id', verifyJWT, async (req, res) => {
       const id = req.params;
@@ -157,6 +157,21 @@ async function run() {
       };
 
       const result = await classCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
+    //class deny
+    app.put('/manageClass/feedback/:id', verifyJWT, async (req, res) => {
+      const id = req.params;
+      const feedback = req.body;
+      const filter = { _id: new ObjectId(id) }
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          feedBack: feedback
+        },
+      };
+
+      const result = await classCollection.updateOne(filter, updateDoc, options);
       res.send(result);
     })
 
