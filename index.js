@@ -48,6 +48,8 @@ async function run() {
     const userCollection = client.db("eSchool").collection("users");
     const classCollection = client.db("eSchool").collection("classes");
     const selectedCollection = client.db("eSchool").collection("selectedClass");
+    const paymentCollection = client.db("eSchool").collection("payments");
+    const enrolledCollection = client.db("eSchool").collection("enrolled");
     // create JWT token
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -125,6 +127,7 @@ async function run() {
     })
 
     app.get('/myClasses/:email', verifyJWT, async (req, res) => {
+      console.log("params", req.decode);
       const email = req.params.email;
       const user = await userCollection.findOne({ email });
       if (!user) {
@@ -138,7 +141,7 @@ async function run() {
       res.json(classes)
     })
     app.get('/approveClasses', async (req, res) => {
-      const data = await classCollection.find({ status: "approved" }).toArray();
+      const data = await classCollection.find({ status: "approved" }).sort({ seats: 1 }).toArray();
       res.json(data)
     })
     //class approved
@@ -211,6 +214,11 @@ async function run() {
       const email = req.params.email;
       const classes = await selectedCollection.find({ user: email }).toArray();
       res.json(classes)
+    }) 
+    app.get('/singleClass/:id', verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const classes = await classCollection.findOne({ _id: new ObjectId(id) });
+      res.json(classes)
     })
 
     // post selected item in database
@@ -228,6 +236,25 @@ async function run() {
       console.log(result);
       res.send(result);
     });
+
+// payment method
+    //Patch
+    app.patch('/classOrder/:id', verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = { _id: ObjectId(id) };
+
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        }
+      }
+      const result = await paymentCollection.insertOne(payment);
+      const enrolledClass = await enrolledCollection.updateOne(filter, updatedDoc);
+      res.send(updatedDoc)
+    })
+
 
 
     // connecting api's
