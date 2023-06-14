@@ -60,6 +60,11 @@ async function run() {
       const result = await userCollection.find().toArray();
       res.send(result)
     })
+    // get all existing user's from database
+    app.get('/instructors', async (req, res) => {
+      const result = await userCollection.find({ role: "musician" }).toArray();
+      res.send(result)
+    })
     // post newUser in database
     app.post('/users', async (req, res) => {
       const user = req.body;
@@ -77,6 +82,7 @@ async function run() {
       const usersData = await userCollection.deleteOne(quary);
       res.send(usersData);
     });
+
     // make admin user
     app.patch('/allUsers/admin/:id', verifyJWT, async (req, res) => {
       const id = req.params;
