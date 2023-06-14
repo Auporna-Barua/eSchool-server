@@ -131,6 +131,10 @@ async function run() {
       const classes = await classCollection.find({}).toArray();
       res.json(classes)
     })
+    app.get('/approveClasses', async (req, res) => {
+      const data = await classCollection.find({ status: "approved" }).toArray();
+      res.json(data)
+    })
     //class approved
     app.patch('/manageClass/approved/:id', verifyJWT, async (req, res) => {
       const id = req.params;
@@ -207,15 +211,16 @@ async function run() {
     app.post('/selectedClass/:email', async (req, res) => {
       const classes = req.body;
       const email = req.params.email;
-      const data = { ...classes, user: email }
+      const data = { name: classes.name, user: email, id: classes._id, photo: classes.photo, price: classes.price, seats: classes.seats, status: classes.status, instructor: classes.instructor, email: classes.email };
       const result = await selectedCollection.insertOne(data);
       res.send(result)
     })
-    app.delete("/selected/:id", verifyJWT, async (req, res) => {
+    app.delete("/selectedClass/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const quary = { _id: new ObjectId(id) };
-      const selectedData = await selectedCollection.deleteOne(quary);
-      res.send(selectedData);
+      const result = await selectedCollection.deleteOne(quary);
+      console.log(result);
+      res.send(result);
     });
 
 
