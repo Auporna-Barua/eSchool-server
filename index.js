@@ -6,6 +6,7 @@ const cors = require('cors');
 require('dotenv').config()
 const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5000
+const stripe = require("stripe")("sk_test_51Msq0jSHKrITcj7CtK2RsqHHhdQEx1yWHGLd5FRpFvIJKzynVOUWfXKXpzAql6OyO1jR6mR0CueZpXgXpu8UYQVB00q6KbNB7P");
 
 // middleware
 app.use(cors());
@@ -50,6 +51,43 @@ async function run() {
     const selectedCollection = client.db("eSchool").collection("selectedClass");
     const paymentCollection = client.db("eSchool").collection("payments");
     const enrolledCollection = client.db("eSchool").collection("enrolled");
+    // use verifyJWT before using verifyAdmin
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email }
+      const user = await userCollection.findOne(query);
+      if (user?.role !== 'admin') {
+        return res.status(403).send({ error: true, message: 'forbidden message' });
+      }
+      next();
+    }
+
+    app.post("/create-payment-intent", async (req, res) => {
+      const order = req.body;
+      console.log(order);
+      const price = order.price;
+      const amount = price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        shipping: {
+          name: 'Jenny Rosen',
+          address: {
+            line1: '510 Townsend St',
+            postal_code: '98140',
+            city: 'San Francisco',
+            state: 'CA',
+            country: 'US'
+          },
+        },
+        payment_method_types: ['card'],
+        description: 'music school educational institute',
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
     // create JWT token
     app.post('/jwt', (req, res) => {
       const user = req.body;
@@ -214,10 +252,10 @@ async function run() {
       const email = req.params.email;
       const classes = await selectedCollection.find({ user: email }).toArray();
       res.json(classes)
-    }) 
-    app.get('/singleClass/:id', verifyJWT, async (req, res) => {
+    })
+    app.get('/singleClass/:id', async (req, res) => {
       const id = req.params.id;
-      const classes = await classCollection.findOne({ _id: new ObjectId(id) });
+      const classes = await selectedCollection.findOne({ _id: new ObjectId(id) });
       res.json(classes)
     })
 
@@ -237,7 +275,7 @@ async function run() {
       res.send(result);
     });
 
-// payment method
+    // payment method
     //Patch
     app.patch('/classOrder/:id', verifyJWT, async (req, res) => {
       const id = req.params.id;
