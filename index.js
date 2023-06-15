@@ -62,26 +62,26 @@ async function run() {
       next();
     }
 
-    app.post("/create-payment-intent", async (req, res) => {
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const order = req.body;
       console.log(order);
       const price = order.price;
-      const amount = price * 100;
+      const amount = parseInt(price * 100);
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
-        currency: "usd",
-        shipping: {
-          name: 'Jenny Rosen',
-          address: {
-            line1: '510 Townsend St',
-            postal_code: '98140',
-            city: 'San Francisco',
-            state: 'CA',
-            country: 'US'
-          },
-        },
+        currency: 'usd',
         payment_method_types: ['card'],
         description: 'music school educational institute',
+        shipping: {
+          name: "Apurna Barua",
+          address: {
+            line1: "Cox's bazar",
+            postal_code: "4700",
+            city: "Cox's bazar",
+            state: "BD",
+            country: "Bangladesh",
+          },
+        },
       });
 
       res.send({
@@ -293,7 +293,17 @@ async function run() {
       res.send(updatedDoc)
     })
 
+    // payment related api
+    app.post('/enroll/paid/:id', verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const id = req.params.id;
+      const insertResult = await paymentCollection.insertOne(payment);
+      const query = { _id: new ObjectId(id) };
+      const deleteResult = await selectedCollection.deleteOne(query);
+      const insertEnroll = await enrolledCollection.insertOne(payment);
 
+      res.send({ insertResult, deleteResult, insertEnroll });
+    })
 
     // connecting api's
     app.get('/', (req, res) => {
