@@ -53,7 +53,7 @@ async function run() {
     const enrolledCollection = client.db("eSchool").collection("enrolled");
     // use verifyJWT before using verifyAdmin
     const verifyAdmin = async (req, res, next) => {
-      const email = req.decoded.email;
+      const email = req.decode.email;
       const query = { email: email }
       const user = await userCollection.findOne(query);
       if (user?.role !== 'admin') {
@@ -96,15 +96,19 @@ async function run() {
     })
 
     // get all existing user's from database
-    app.get('/allUsers', verifyJWT, async (req, res) => {
+    app.get('/allUsers', verifyJWT, verifyAdmin, async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result)
     })
+
+
     // get all existing user's from database
     app.get('/instructors', async (req, res) => {
-      const result = await userCollection.find({ role: "musician" }).toArray();
+      const result = await userCollection.find({ role: "musician" }).sort({ students: -1 }).toArray();
       res.send(result)
     })
+
+
     // post newUser in database
     app.post('/users', async (req, res) => {
       const user = req.body;
@@ -115,8 +119,10 @@ async function run() {
       }
       const result = await userCollection.insertOne(user);
       res.send(result)
-    })
-    app.delete("/user/:id", verifyJWT, async (req, res) => {
+    });
+
+
+    app.delete("/user/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const quary = { _id: new ObjectId(id) };
       const usersData = await userCollection.deleteOne(quary);
@@ -124,7 +130,7 @@ async function run() {
     });
 
     // make admin user
-    app.patch('/allUsers/admin/:id', verifyJWT, async (req, res) => {
+    app.patch('/allUsers/admin/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params;
       const filter = { _id: new ObjectId(id) }
       const updateDoc = {
@@ -135,16 +141,20 @@ async function run() {
 
       const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
-    })
-    app.get('/allUsers/admin/:email', verifyJWT, async (req, res) => {
+    });
+
+
+    app.get('/allUsers/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
       const query = { email: email }
       const user = await userCollection.findOne(query);
       res.send(user)
 
-    })
+    });
+
+
     // make Musician user
-    app.patch('/allUsers/musician/:id', verifyJWT, async (req, res) => {
+    app.patch('/allUsers/musician/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params;
       const filter = { _id: new ObjectId(id) }
       const updateDoc = {
@@ -155,14 +165,17 @@ async function run() {
 
       const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
-    })
+    });
+
+
     // course related api
 
     app.post('/addClass', verifyJWT, async (req, res) => {
       const classData = req.body;
       const result = await classCollection.insertOne(classData);
       res.send(result)
-    })
+    });
+
 
     app.get('/myClasses/:email', verifyJWT, async (req, res) => {
       console.log("params", req.decode);
@@ -173,15 +186,21 @@ async function run() {
       }
       const classes = await classCollection.find({ email }).toArray();
       res.json(classes)
-    })
+    });
+
+
     app.get('/allClasses', verifyJWT, async (req, res) => {
       const classes = await classCollection.find({}).toArray();
       res.json(classes)
-    })
+    });
+
+
     app.get('/approveClasses', async (req, res) => {
-      const data = await classCollection.find({ status: "approved" }).sort({ seats: 1 }).toArray();
+      const data = await classCollection.find({ status: "approved" }).sort({ seats: -1 }).toArray();
       res.json(data)
-    })
+    });
+
+
     //class approved
     app.patch('/manageClass/approved/:id', verifyJWT, async (req, res) => {
       const id = req.params;
@@ -194,7 +213,9 @@ async function run() {
 
       const result = await classCollection.updateOne(filter, updateDoc);
       res.send(result);
-    })
+    });
+
+
     //class deny
     app.patch('/manageClass/deny/:id', verifyJWT, async (req, res) => {
       const id = req.params;
@@ -207,7 +228,10 @@ async function run() {
 
       const result = await classCollection.updateOne(filter, updateDoc);
       res.send(result);
-    })
+    });
+
+
+
     //class deny
     app.put('/manageClass/feedback/:id', verifyJWT, async (req, res) => {
       const id = req.params;
@@ -253,6 +277,7 @@ async function run() {
       const classes = await selectedCollection.find({ user: email }).toArray();
       res.json(classes)
     })
+
     app.get('/singleClass/:id', async (req, res) => {
       const id = req.params.id;
       const classes = await selectedCollection.findOne({ _id: new ObjectId(id) });
@@ -267,6 +292,8 @@ async function run() {
       const result = await selectedCollection.insertOne(data);
       res.send(result)
     })
+
+
     app.delete("/selectedClass/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const quary = { _id: new ObjectId(id) };
@@ -293,17 +320,43 @@ async function run() {
       res.send(updatedDoc)
     })
 
+
     // payment related api
     app.post('/enroll/paid/:id', verifyJWT, async (req, res) => {
       const payment = req.body;
       const id = req.params.id;
+      console.log("payment", payment);
       const insertResult = await paymentCollection.insertOne(payment);
       const query = { _id: new ObjectId(id) };
+      const filter = { _id: new ObjectId(payment?.id) };
+      const course = await classCollection.findOne(filter)
+      const updatedDoc = {
+        $set: {
+          seats: course?.seats - 1,
+        }
+      }
       const deleteResult = await selectedCollection.deleteOne(query);
       const insertEnroll = await enrolledCollection.insertOne(payment);
+      const availableSeat = await classCollection.updateOne(filter, updatedDoc);
 
-      res.send({ insertResult, deleteResult, insertEnroll });
+      res.send({ insertResult, deleteResult, insertEnroll, availableSeat });
     })
+
+    // enrolled class
+    app.get('/enrolledClasses/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const classes = await enrolledCollection.find({ studentEmail: email }).toArray();
+      res.json(classes)
+    })
+
+
+    // payment history
+    app.get('/paymenthistory/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const payments = await paymentCollection.find({ user: email }).sort({ date: -1 }).toArray();
+      res.json(payments)
+    })
+
 
     // connecting api's
     app.get('/', (req, res) => {
